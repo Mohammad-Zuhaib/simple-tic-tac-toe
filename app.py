@@ -3,7 +3,7 @@ import random
 
 def initialize_game():
     # Reset only game-related state, not settings
-    st.session_state.board = [' '] * 9
+    st.session_state.board = ['\u00A0'] * 9
     st.session_state.current_player = 'X'
     st.session_state.game_over = False
     st.session_state.winner = None
@@ -16,7 +16,7 @@ def check_winner(board):
     ]
     for combo in winning_combos:
         a, b, c = combo
-        if board[a] != ' ' and board[a] == board[b] == board[c]:
+        if board[a] != '\u00A0' and board[a] == board[b] == board[c]:
             return board[a]
     return None
 
@@ -49,10 +49,10 @@ def minimax(board, depth, is_maximizing):
         return best_score
 
 def computer_move():
-    if st.session_state.game_over or ' ' not in st.session_state.board:
+    if st.session_state.game_over or '\u00A0' not in st.session_state.board:
         return
     
-    empty_cells = [i for i, cell in enumerate(st.session_state.board) if cell == ' ']
+    empty_cells = [i for i, cell in enumerate(st.session_state.board) if cell == '\u00A0']
     
     try:
         if st.session_state.difficulty == "Easy":
@@ -103,14 +103,14 @@ def computer_move():
         st.error(f"Computer move error: {str(e)}")
 
 def handle_click(index):
-    if st.session_state.board[index] == ' ' and not st.session_state.game_over:
+    if st.session_state.board[index] == '\u00A0' and not st.session_state.game_over:
         st.session_state.board[index] = st.session_state.current_player
         
         winner = check_winner(st.session_state.board)
         if winner:
             st.session_state.winner = winner
             st.session_state.game_over = True
-        elif ' ' not in st.session_state.board:
+        elif '\u00A0' not in st.session_state.board:
             st.session_state.winner = 'Draw'
             st.session_state.game_over = True
         else:
