@@ -21,13 +21,100 @@ def check_winner(board):
     return None
 
 def minimax(board, depth, is_maximizing):
-    # ... keep minimax implementation same as before ... 
+    winner = check_winner(board)
+    if winner == 'O':
+        return 1
+    if winner == 'X':
+        return -1
+    if ' ' not in board:
+        return 0
+
+    if is_maximizing:
+        best_score = -float('inf')
+        for i in range(9):
+            if board[i] == ' ':
+                board[i] = 'O'
+                score = minimax(board, depth + 1, False)
+                board[i] = ' '
+                best_score = max(score, best_score)
+        return best_score
+    else:
+        best_score = float('inf')
+        for i in range(9):
+            if board[i] == ' ':
+                board[i] = 'X'
+                score = minimax(board, depth + 1, True)
+                board[i] = ' '
+                best_score = min(score, best_score)
+        return best_score
 
 def computer_move():
-    # ... keep computer_move implementation same as before ...
+    if st.session_state.game_over or ' ' not in st.session_state.board:
+        return
+    
+    empty_cells = [i for i, cell in enumerate(st.session_state.board) if cell == ' ']
+    
+    try:
+        if st.session_state.difficulty == "Easy":
+            move = random.choice(empty_cells)
+        elif st.session_state.difficulty == "Medium":
+            move = None
+            # Try to win
+            for cell in empty_cells:
+                temp_board = st.session_state.board.copy()
+                temp_board[cell] = 'O'
+                if check_winner(temp_board) == 'O':
+                    move = cell
+                    break
+            # Block player
+            if move is None:
+                for cell in empty_cells:
+                    temp_board = st.session_state.board.copy()
+                    temp_board[cell] = 'X'
+                    if check_winner(temp_board) == 'X':
+                        move = cell
+                        break
+            # Random if no win/block
+            if move is None:
+                move = random.choice(empty_cells)
+        else:  # Hard
+            best_score = -float('inf')
+            best_move = empty_cells[0]
+            for cell in empty_cells:
+                temp_board = st.session_state.board.copy()
+                temp_board[cell] = 'O'
+                score = minimax(temp_board, 0, False)
+                if score > best_score:
+                    best_score = score
+                    best_move = cell
+            move = best_move
+
+        st.session_state.board[move] = 'O'
+        winner = check_winner(st.session_state.board)
+        if winner:
+            st.session_state.winner = winner
+            st.session_state.game_over = True
+        elif ' ' not in st.session_state.board:
+            st.session_state.winner = 'Draw'
+            st.session_state.game_over = True
+        else:
+            st.session_state.current_player = 'X'
+    except Exception as e:
+        st.error(f"Computer move error: {str(e)}")
 
 def handle_click(index):
-    # ... keep handle_click implementation same as before ...
+    if st.session_state.board[index] == ' ' and not st.session_state.game_over:
+        st.session_state.board[index] = st.session_state.current_player
+        
+        winner = check_winner(st.session_state.board)
+        if winner:
+            st.session_state.winner = winner
+            st.session_state.game_over = True
+        elif ' ' not in st.session_state.board:
+            st.session_state.winner = 'Draw'
+            st.session_state.game_over = True
+        else:
+            st.session_state.current_player = 'O' if st.session_state.current_player == 'X' else 'X'
 
 # Initialize game state
 if 'board' not in st.session_state:
