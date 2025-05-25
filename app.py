@@ -53,14 +53,12 @@ def computer_move():
     if st.session_state.difficulty == "Easy":
         move = random.choice(empty)
     elif st.session_state.difficulty == "Medium":
-        # Win if possible
         for i in empty:
             temp = board.copy()
             temp[i] = 'O'
             if check_winner(temp) == 'O':
                 move = i
                 break
-        # Block if needed
         if move is None:
             for i in empty:
                 temp = board.copy()
@@ -68,11 +66,9 @@ def computer_move():
                 if check_winner(temp) == 'X':
                     move = i
                     break
-        # Otherwise random
         if move is None:
             move = random.choice(empty)
     else:
-        # Hard: Minimax
         best_score = -float('inf')
         for i in empty:
             temp = board.copy()
@@ -81,16 +77,17 @@ def computer_move():
             if score > best_score:
                 best_score = score
                 move = i
-    board[move] = 'O'
-    winner = check_winner(board)
-    if winner:
-        st.session_state.winner = winner
-        st.session_state.game_over = True
-    elif ' ' not in board:
-        st.session_state.winner = 'Draw'
-        st.session_state.game_over = True
-    else:
-        st.session_state.current_player = 'X'
+    if move is not None:
+        board[move] = 'O'
+        winner = check_winner(board)
+        if winner:
+            st.session_state.winner = winner
+            st.session_state.game_over = True
+        elif ' ' not in board:
+            st.session_state.winner = 'Draw'
+            st.session_state.game_over = True
+        else:
+            st.session_state.current_player = 'X'
 
 def handle_click(idx):
     if st.session_state.board[idx] == ' ' and not st.session_state.game_over:
@@ -113,13 +110,11 @@ def get_symbol(cell):
     else:
         return '🟦'
 
-# --- Initialize State ---
 if 'board' not in st.session_state:
     initialize_game()
 
 st.title("Tic Tac Toe")
 
-# --- Game Mode ---
 if 'game_mode' not in st.session_state:
     st.session_state.game_mode = "Player vs Player"
 def update_mode():
@@ -132,7 +127,6 @@ game_mode = st.selectbox(
     on_change=update_mode
 )
 
-# --- Difficulty ---
 if st.session_state.game_mode == "Player vs Computer":
     if 'difficulty' not in st.session_state:
         st.session_state.difficulty = "Easy"
@@ -146,30 +140,33 @@ if st.session_state.game_mode == "Player vs Computer":
         on_change=update_difficulty
     )
 
-# --- Board ---
+# Board rendering
 for r in range(3):
     cols = st.columns(3)
     for c in range(3):
-        idx = r*3 + c
+        idx = r * 3 + c
         with cols[c]:
             st.button(
                 get_symbol(st.session_state.board[idx]),
                 key=f"cell_{idx}",
                 on_click=handle_click,
                 args=(idx,),
-                disabled=(st.session_state.board[idx] != ' ' or 
-                          st.session_state.game_over or
-                          (game_mode == "Player vs Computer" and st.session_state.current_player == 'O'))
+                disabled=(
+                    st.session_state.board[idx] != ' ' or
+                    st.session_state.game_over or
+                    (game_mode == "Player vs Computer" and st.session_state.current_player == 'O')
+                )
             )
 
-# --- Computer move: Manual trigger ---
-if (game_mode == "Player vs Computer"
+# Computer move: only when it's the computer's turn and game is not over
+if (
+    st.session_state.game_mode == "Player vs Computer"
     and not st.session_state.game_over
-    and st.session_state.current_player == 'O'):
-    if st.button("Computer Move"):
-        computer_move()
+    and st.session_state.current_player == 'O'
+):
+    computer_move()
 
-# --- Status ---
+# Game status
 if st.session_state.game_over:
     if st.session_state.winner == 'Draw':
         st.header("It's a draw! 🤝")
