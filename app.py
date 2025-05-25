@@ -107,6 +107,8 @@ def handle_click(idx):
             st.session_state.current_player = 'O' if st.session_state.current_player == 'X' else 'X'
             if st.session_state.game_mode == "Player vs Computer" and st.session_state.current_player == 'O':
                 st.session_state.awaiting_computer = True
+                # Immediately rerun so the computer can move
+                st.experimental_rerun()
 
 def get_symbol(cell):
     if cell == 'X':
