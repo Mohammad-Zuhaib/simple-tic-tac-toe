@@ -6,7 +6,6 @@ def initialize_game():
     st.session_state.current_player = 'X'
     st.session_state.game_over = False
     st.session_state.winner = None
-    st.session_state.awaiting_computer = False
 
 def check_winner(board):
     wins = [
@@ -105,10 +104,6 @@ def handle_click(idx):
             st.session_state.game_over = True
         else:
             st.session_state.current_player = 'O' if st.session_state.current_player == 'X' else 'X'
-            if st.session_state.game_mode == "Player vs Computer" and st.session_state.current_player == 'O':
-                st.session_state.awaiting_computer = True
-                # Immediately rerun so the computer can move
-                st.experimental_rerun()
 
 def get_symbol(cell):
     if cell == 'X':
@@ -121,8 +116,6 @@ def get_symbol(cell):
 # --- Initialize State ---
 if 'board' not in st.session_state:
     initialize_game()
-if 'awaiting_computer' not in st.session_state:
-    st.session_state.awaiting_computer = False
 
 st.title("Tic Tac Toe")
 
@@ -169,13 +162,12 @@ for r in range(3):
                           (game_mode == "Player vs Computer" and st.session_state.current_player == 'O'))
             )
 
-# --- Computer move (NO rerun, just react to state flag) ---
-if (st.session_state.game_mode == "Player vs Computer"
+# --- Computer move: Manual trigger ---
+if (game_mode == "Player vs Computer"
     and not st.session_state.game_over
-    and st.session_state.current_player == 'O'
-    and st.session_state.awaiting_computer):
-    computer_move()
-    st.session_state.awaiting_computer = False
+    and st.session_state.current_player == 'O'):
+    if st.button("Computer Move"):
+        computer_move()
 
 # --- Status ---
 if st.session_state.game_over:
