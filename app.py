@@ -2,7 +2,6 @@ import streamlit as st
 import random
 
 def initialize_game():
-    # Reset only game-related state, not settings
     st.session_state.board = [' '] * 9
     st.session_state.current_player = 'X'
     st.session_state.game_over = False
@@ -123,7 +122,8 @@ def get_symbol(cell):
     elif cell == 'O':
         return '⭕'
     else:
-        return '⬜'
+        # Use a visible placeholder for empty cell
+        return '□'
 
 # Initialize game state
 if 'board' not in st.session_state:
