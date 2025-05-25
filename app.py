@@ -1,12 +1,7 @@
 import streamlit as st
 import random
 
-def initialize_game():
-    st.session_state.board = [' '] * 9
-    st.session_state.current_player = 'X'
-    st.session_state.game_over = False
-    st.session_state.winner = None
-
+# --- Game Logic Functions ---
 def check_winner(board):
     wins = [
         [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -19,7 +14,7 @@ def check_winner(board):
             return board[a]
     return None
 
-def minimax(board, depth, is_maximizing):
+def minimax(board, is_maximizing):
     winner = check_winner(board)
     if winner == 'O':
         return 1
@@ -32,7 +27,7 @@ def minimax(board, depth, is_maximizing):
         for i in range(9):
             if board[i] == ' ':
                 board[i] = 'O'
-                score = minimax(board, depth+1, False)
+                score = minimax(board, False)
                 board[i] = ' '
                 best = max(score, best)
         return best
@@ -41,24 +36,25 @@ def minimax(board, depth, is_maximizing):
         for i in range(9):
             if board[i] == ' ':
                 board[i] = 'X'
-                score = minimax(board, depth+1, True)
+                score = minimax(board, True)
                 board[i] = ' '
                 best = min(score, best)
         return best
 
-def computer_move():
-    board = st.session_state.board
+def computer_move(board, difficulty):
     empty = [i for i, c in enumerate(board) if c == ' ']
     move = None
-    if st.session_state.difficulty == "Easy":
+    if difficulty == "Easy":
         move = random.choice(empty)
-    elif st.session_state.difficulty == "Medium":
+    elif difficulty == "Medium":
+        # Win if possible
         for i in empty:
             temp = board.copy()
             temp[i] = 'O'
             if check_winner(temp) == 'O':
                 move = i
                 break
+        # Block if needed
         if move is None:
             for i in empty:
                 temp = board.copy()
@@ -66,6 +62,7 @@ def computer_move():
                 if check_winner(temp) == 'X':
                     move = i
                     break
+        # Otherwise random
         if move is None:
             move = random.choice(empty)
     else:
@@ -73,107 +70,121 @@ def computer_move():
         for i in empty:
             temp = board.copy()
             temp[i] = 'O'
-            score = minimax(temp, 0, False)
+            score = minimax(temp, False)
             if score > best_score:
                 best_score = score
                 move = i
-    if move is not None:
-        board[move] = 'O'
-        winner = check_winner(board)
-        if winner:
-            st.session_state.winner = winner
-            st.session_state.game_over = True
-        elif ' ' not in board:
-            st.session_state.winner = 'Draw'
-            st.session_state.game_over = True
-        else:
-            st.session_state.current_player = 'X'
+    return move
 
-def handle_click(idx):
-    if st.session_state.board[idx] == ' ' and not st.session_state.game_over:
-        st.session_state.board[idx] = st.session_state.current_player
-        winner = check_winner(st.session_state.board)
-        if winner:
-            st.session_state.winner = winner
-            st.session_state.game_over = True
-        elif ' ' not in st.session_state.board:
-            st.session_state.winner = 'Draw'
-            st.session_state.game_over = True
-        else:
-            st.session_state.current_player = 'O' if st.session_state.current_player == 'X' else 'X'
+def new_game():
+    st.session_state.board = [' '] * 9
+    st.session_state.current_player = 'X'
+    st.session_state.game_over = False
+    st.session_state.winner = None
+    st.session_state.waiting_for_computer = False
 
-def get_symbol(cell):
-    if cell == 'X':
-        return '❌'
-    elif cell == 'O':
-        return '⭕'
-    else:
-        return '🟦'
-
+# --- UI and Session State ---
 if 'board' not in st.session_state:
-    initialize_game()
+    new_game()
 
 st.title("Tic Tac Toe")
 
-if 'game_mode' not in st.session_state:
-    st.session_state.game_mode = "Player vs Player"
-def update_mode():
-    st.session_state.game_mode = st.session_state.game_mode_widget
-    initialize_game()
-game_mode = st.selectbox(
-    "Game Mode",
-    ["Player vs Player", "Player vs Computer"],
-    key="game_mode_widget",
-    on_change=update_mode
+# Game mode and difficulty
+def set_mode():
+    new_game()
+st.selectbox(
+    "Game Mode", ["Player vs Player", "Player vs Computer"],
+    key="game_mode", on_change=set_mode
 )
-
 if st.session_state.game_mode == "Player vs Computer":
-    if 'difficulty' not in st.session_state:
-        st.session_state.difficulty = "Easy"
-    def update_difficulty():
-        st.session_state.difficulty = st.session_state.difficulty_widget
-        initialize_game()
+    def set_difficulty():
+        new_game()
     st.selectbox(
-        "Computer Difficulty",
-        ["Easy", "Medium", "Hard"],
-        key="difficulty_widget",
-        on_change=update_difficulty
+        "Difficulty", ["Easy", "Medium", "Hard"],
+        key="difficulty", on_change=set_difficulty
     )
+else:
+    st.session_state.difficulty = "Easy"
 
-# Board rendering
-for r in range(3):
+# --- Main Board UI ---
+def get_symbol(cell):
+    if cell == 'X':
+        return '❌'
+    if cell == 'O':
+        return '⭕'
+    return ' '
+
+def handle_click(idx):
+    if st.session_state.game_over:
+        return
+    if st.session_state.board[idx] != ' ':
+        return
+    if st.session_state.game_mode == "Player vs Computer" and st.session_state.current_player == 'O':
+        return
+    st.session_state.board[idx] = st.session_state.current_player
+    winner = check_winner(st.session_state.board)
+    if winner:
+        st.session_state.winner = winner
+        st.session_state.game_over = True
+    elif ' ' not in st.session_state.board:
+        st.session_state.winner = 'Draw'
+        st.session_state.game_over = True
+    else:
+        # Switch player
+        if st.session_state.current_player == 'X':
+            st.session_state.current_player = 'O'
+            # Trigger computer move if PvC and not game over
+            if (st.session_state.game_mode == "Player vs Computer" and not st.session_state.game_over):
+                st.session_state.waiting_for_computer = True
+        else:
+            st.session_state.current_player = 'X'
+
+# Draw board
+for row in range(3):
     cols = st.columns(3)
-    for c in range(3):
-        idx = r * 3 + c
-        with cols[c]:
+    for col in range(3):
+        idx = row * 3 + col
+        with cols[col]:
             st.button(
-                get_symbol(st.session_state.board[idx]),
+                get_symbol(st.session_state.board[idx]) or ' ',
                 key=f"cell_{idx}",
                 on_click=handle_click,
                 args=(idx,),
                 disabled=(
                     st.session_state.board[idx] != ' ' or
                     st.session_state.game_over or
-                    (game_mode == "Player vs Computer" and st.session_state.current_player == 'O')
+                    (st.session_state.game_mode == "Player vs Computer" and st.session_state.current_player == 'O')
                 )
             )
 
-# Computer move: only when it's the computer's turn and game is not over
+# --- Computer Move (automatic, no rerun) ---
 if (
     st.session_state.game_mode == "Player vs Computer"
     and not st.session_state.game_over
     and st.session_state.current_player == 'O'
+    and st.session_state.waiting_for_computer
 ):
-    computer_move()
+    idx = computer_move(st.session_state.board, st.session_state.difficulty)
+    st.session_state.board[idx] = 'O'
+    winner = check_winner(st.session_state.board)
+    if winner:
+        st.session_state.winner = winner
+        st.session_state.game_over = True
+    elif ' ' not in st.session_state.board:
+        st.session_state.winner = 'Draw'
+        st.session_state.game_over = True
+    else:
+        st.session_state.current_player = 'X'
+    st.session_state.waiting_for_computer = False
 
-# Game status
+# --- Status and Reset ---
 if st.session_state.game_over:
     if st.session_state.winner == 'Draw':
-        st.header("It's a draw! 🤝")
+        st.success("It's a draw! 🤝")
     else:
-        st.header(f"Player {st.session_state.winner} wins! 🎉")
+        st.success(f"Player {st.session_state.winner} wins! 🎉")
 else:
-    st.subheader(f"Current player: {st.session_state.current_player}")
+    st.info(f"Current player: {st.session_state.current_player}")
 
 if st.button("Reset Game"):
-    initialize_game()
+    new_game()
