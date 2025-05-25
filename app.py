@@ -3,7 +3,7 @@ import random
 
 def initialize_game():
     # Reset only game-related state, not settings
-    st.session_state.board = ['\u00A0'] * 9
+    st.session_state.board = [' '] * 9
     st.session_state.current_player = 'X'
     st.session_state.game_over = False
     st.session_state.winner = None
@@ -16,7 +16,7 @@ def check_winner(board):
     ]
     for combo in winning_combos:
         a, b, c = combo
-        if board[a] != '\u00A0' and board[a] == board[b] == board[c]:
+        if board[a] != ' ' and board[a] == board[b] == board[c]:
             return board[a]
     return None
 
@@ -49,11 +49,11 @@ def minimax(board, depth, is_maximizing):
         return best_score
 
 def computer_move():
-    if st.session_state.game_over or '\u00A0' not in st.session_state.board:
+    if st.session_state.game_over or ' ' not in st.session_state.board:
         return
-    
-    empty_cells = [i for i, cell in enumerate(st.session_state.board) if cell == '\u00A0']
-    
+
+    empty_cells = [i for i, cell in enumerate(st.session_state.board) if cell == ' ']
+
     try:
         if st.session_state.difficulty == "Easy":
             move = random.choice(empty_cells)
@@ -103,18 +103,27 @@ def computer_move():
         st.error(f"Computer move error: {str(e)}")
 
 def handle_click(index):
-    if st.session_state.board[index] == '\u00A0' and not st.session_state.game_over:
+    if st.session_state.board[index] == ' ' and not st.session_state.game_over:
         st.session_state.board[index] = st.session_state.current_player
-        
+
         winner = check_winner(st.session_state.board)
         if winner:
             st.session_state.winner = winner
             st.session_state.game_over = True
-        elif '\u00A0' not in st.session_state.board:
+        elif ' ' not in st.session_state.board:
             st.session_state.winner = 'Draw'
             st.session_state.game_over = True
         else:
             st.session_state.current_player = 'O' if st.session_state.current_player == 'X' else 'X'
+
+# Symbol rendering for board cells
+def get_symbol(cell):
+    if cell == 'X':
+        return '❌'
+    elif cell == 'O':
+        return '⭕'
+    else:
+        return '⬜'
 
 # Initialize game state
 if 'board' not in st.session_state:
@@ -142,11 +151,11 @@ game_mode = st.selectbox(
 if st.session_state.game_mode == "Player vs Computer":
     if 'difficulty' not in st.session_state:
         st.session_state.difficulty = "Easy"
-    
+
     def update_difficulty():
         st.session_state.difficulty = st.session_state.difficulty_widget
         initialize_game()
-    
+
     difficulty = st.selectbox(
         "Computer Difficulty",
         ["Easy", "Medium", "Hard"],
@@ -161,7 +170,7 @@ for row in range(3):
         index = row * 3 + col
         with cols[col]:
             st.button(
-                st.session_state.board[index],
+                get_symbol(st.session_state.board[index]),
                 key=f"cell_{index}",
                 on_click=handle_click,
                 args=(index,),
@@ -189,14 +198,3 @@ else:
 # Reset button
 if st.button("Reset Game"):
     initialize_game()
-
-# Styling
-st.markdown("""
-    <style>
-    button {
-        height: 80px !important;
-        width: 80px !important;
-        font-size: 40px !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
