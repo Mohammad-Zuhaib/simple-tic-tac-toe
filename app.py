@@ -107,8 +107,8 @@ def handle_click(index):
             st.session_state.game_over = True
         else:
             st.session_state.current_player = 'O' if st.session_state.current_player == 'X' else 'X'
-            # Signal that computer needs to move next run
-            if (st.session_state.game_mode == "Player vs Computer" and st.session_state.current_player == 'O'):
+            # If it's the computer's turn, set the flag
+            if st.session_state.game_mode == "Player vs Computer" and st.session_state.current_player == 'O':
                 st.session_state.awaiting_computer = True
 
 def get_symbol(cell):
@@ -169,7 +169,7 @@ for row in range(3):
                         st.session_state.current_player == 'O')
             )
 
-# Only let computer move on a rerun at the top level, NOT with st.experimental_rerun()
+# Only make the computer move at the top level, and do NOT call st.experimental_rerun()
 if (
     st.session_state.game_mode == "Player vs Computer"
     and not st.session_state.game_over
