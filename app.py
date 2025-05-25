@@ -27,7 +27,6 @@ def minimax(board, depth, is_maximizing):
         return -1
     if ' ' not in board:
         return 0
-
     if is_maximizing:
         best_score = -float('inf')
         for i in range(9):
@@ -50,22 +49,18 @@ def minimax(board, depth, is_maximizing):
 def computer_move():
     if st.session_state.game_over or ' ' not in st.session_state.board:
         return
-
     empty_cells = [i for i, cell in enumerate(st.session_state.board) if cell == ' ']
-
     try:
         if st.session_state.difficulty == "Easy":
             move = random.choice(empty_cells)
         elif st.session_state.difficulty == "Medium":
             move = None
-            # Try to win
             for cell in empty_cells:
                 temp_board = st.session_state.board.copy()
                 temp_board[cell] = 'O'
                 if check_winner(temp_board) == 'O':
                     move = cell
                     break
-            # Block player
             if move is None:
                 for cell in empty_cells:
                     temp_board = st.session_state.board.copy()
@@ -73,7 +68,6 @@ def computer_move():
                     if check_winner(temp_board) == 'X':
                         move = cell
                         break
-            # Random if no win/block
             if move is None:
                 move = random.choice(empty_cells)
         else:  # Hard
@@ -87,7 +81,6 @@ def computer_move():
                     best_score = score
                     best_move = cell
             move = best_move
-
         st.session_state.board[move] = 'O'
         winner = check_winner(st.session_state.board)
         if winner:
@@ -104,7 +97,6 @@ def computer_move():
 def handle_click(index):
     if st.session_state.board[index] == ' ' and not st.session_state.game_over:
         st.session_state.board[index] = st.session_state.current_player
-
         winner = check_winner(st.session_state.board)
         if winner:
             st.session_state.winner = winner
@@ -115,24 +107,19 @@ def handle_click(index):
         else:
             st.session_state.current_player = 'O' if st.session_state.current_player == 'X' else 'X'
 
-# Symbol rendering for board cells
 def get_symbol(cell):
     if cell == 'X':
         return '❌'
     elif cell == 'O':
         return '⭕'
     else:
-        # Use a visible placeholder for empty cell
-        return '□'
+        return '🟦'  # Highly visible empty cell!
 
-# Initialize game state
 if 'board' not in st.session_state:
     initialize_game()
 
-# Game interface
 st.title("Tic Tac Toe")
 
-# Game mode selection with session state management
 if 'game_mode' not in st.session_state:
     st.session_state.game_mode = "Player vs Player"
 
@@ -147,15 +134,12 @@ game_mode = st.selectbox(
     on_change=update_game_mode
 )
 
-# Difficulty selection with session state management
 if st.session_state.game_mode == "Player vs Computer":
     if 'difficulty' not in st.session_state:
         st.session_state.difficulty = "Easy"
-
     def update_difficulty():
         st.session_state.difficulty = st.session_state.difficulty_widget
         initialize_game()
-
     difficulty = st.selectbox(
         "Computer Difficulty",
         ["Easy", "Medium", "Hard"],
@@ -163,7 +147,6 @@ if st.session_state.game_mode == "Player vs Computer":
         on_change=update_difficulty
     )
 
-# Game board
 for row in range(3):
     cols = st.columns(3)
     for col in range(3):
@@ -180,13 +163,11 @@ for row in range(3):
                         st.session_state.current_player == 'O')
             )
 
-# Computer move logic
 if (game_mode == "Player vs Computer" and 
     not st.session_state.game_over and 
     st.session_state.current_player == 'O'):
     computer_move()
 
-# Game status
 if st.session_state.game_over:
     if st.session_state.winner == 'Draw':
         st.header("It's a draw! 🤝")
@@ -195,6 +176,8 @@ if st.session_state.game_over:
 else:
     st.subheader(f"Current player: {st.session_state.current_player}")
 
-# Reset button
 if st.button("Reset Game"):
     initialize_game()
+
+# Debug: See board state
+st.write("Board state:", st.session_state.board)
