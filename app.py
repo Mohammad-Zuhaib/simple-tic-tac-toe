@@ -106,6 +106,14 @@ def handle_click(index):
             st.session_state.game_over = True
         else:
             st.session_state.current_player = 'O' if st.session_state.current_player == 'X' else 'X'
+            # If it's now computer's turn, make the move and rerun
+            if (
+                st.session_state.game_mode == "Player vs Computer"
+                and st.session_state.current_player == 'O'
+                and not st.session_state.game_over
+            ):
+                computer_move()
+                st.experimental_rerun()
 
 def get_symbol(cell):
     if cell == 'X':
@@ -113,7 +121,7 @@ def get_symbol(cell):
     elif cell == 'O':
         return '⭕'
     else:
-        return '🟦'  # Highly visible empty cell!
+        return '🟦'
 
 if 'board' not in st.session_state:
     initialize_game()
@@ -163,11 +171,6 @@ for row in range(3):
                         st.session_state.current_player == 'O')
             )
 
-if (game_mode == "Player vs Computer" and 
-    not st.session_state.game_over and 
-    st.session_state.current_player == 'O'):
-    computer_move()
-
 if st.session_state.game_over:
     if st.session_state.winner == 'Draw':
         st.header("It's a draw! 🤝")
@@ -178,6 +181,3 @@ else:
 
 if st.button("Reset Game"):
     initialize_game()
-
-# Debug: See board state
-st.write("Board state:", st.session_state.board)
