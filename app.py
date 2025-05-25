@@ -6,7 +6,7 @@ def initialize_game():
     st.session_state.current_player = 'X'
     st.session_state.game_over = False
     st.session_state.winner = None
-    st.session_state.awaiting_computer = False  # <--- NEW
+    st.session_state.awaiting_computer = False
 
 def check_winner(board):
     winning_combos = [
@@ -107,7 +107,7 @@ def handle_click(index):
             st.session_state.game_over = True
         else:
             st.session_state.current_player = 'O' if st.session_state.current_player == 'X' else 'X'
-            # Signal that the computer should move next
+            # Signal that computer needs to move next run
             if (st.session_state.game_mode == "Player vs Computer" and st.session_state.current_player == 'O'):
                 st.session_state.awaiting_computer = True
 
@@ -169,7 +169,7 @@ for row in range(3):
                         st.session_state.current_player == 'O')
             )
 
-# <--- KEY LOGIC: Let computer move if needed
+# Only let computer move on a rerun at the top level, NOT with st.experimental_rerun()
 if (
     st.session_state.game_mode == "Player vs Computer"
     and not st.session_state.game_over
@@ -178,7 +178,6 @@ if (
 ):
     computer_move()
     st.session_state.awaiting_computer = False
-    st.experimental_rerun()
 
 if st.session_state.game_over:
     if st.session_state.winner == 'Draw':
