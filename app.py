@@ -119,11 +119,13 @@ def get_symbol(cell):
     else:
         return '🟦'
 
+# ---- Initial session state ----
 if 'board' not in st.session_state:
     initialize_game()
 if 'awaiting_computer' not in st.session_state:
     st.session_state.awaiting_computer = False
 
+# ---- Title and controls ----
 st.title("Tic Tac Toe")
 
 if 'game_mode' not in st.session_state:
@@ -153,6 +155,7 @@ if st.session_state.game_mode == "Player vs Computer":
         on_change=update_difficulty
     )
 
+# ---- Render Board ----
 for row in range(3):
     cols = st.columns(3)
     for col in range(3):
@@ -169,16 +172,18 @@ for row in range(3):
                         st.session_state.current_player == 'O')
             )
 
-# Only make the computer move at the top level, and do NOT call st.experimental_rerun()
+# ---- Computer move if needed ----
 if (
     st.session_state.game_mode == "Player vs Computer"
     and not st.session_state.game_over
     and st.session_state.current_player == 'O'
     and st.session_state.awaiting_computer
 ):
+    # Computer makes a move, flag is cleared
     computer_move()
     st.session_state.awaiting_computer = False
 
+# ---- Game status ----
 if st.session_state.game_over:
     if st.session_state.winner == 'Draw':
         st.header("It's a draw! 🤝")
