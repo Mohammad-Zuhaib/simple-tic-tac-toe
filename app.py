@@ -153,3 +153,50 @@ if st.session_state.game_mode == "Player vs Computer":
         key="difficulty_widget",
         on_change=update_difficulty
     )
+
+# Game board
+for row in range(3):
+    cols = st.columns(3)
+    for col in range(3):
+        index = row * 3 + col
+        with cols[col]:
+            st.button(
+                st.session_state.board[index],
+                key=f"cell_{index}",
+                on_click=handle_click,
+                args=(index,),
+                disabled=st.session_state.board[index] != ' ' or 
+                        st.session_state.game_over or 
+                        (game_mode == "Player vs Computer" and 
+                        st.session_state.current_player == 'O')
+            )
+
+# Computer move logic
+if (game_mode == "Player vs Computer" and 
+    not st.session_state.game_over and 
+    st.session_state.current_player == 'O'):
+    computer_move()
+
+# Game status
+if st.session_state.game_over:
+    if st.session_state.winner == 'Draw':
+        st.header("It's a draw! 🤝")
+    else:
+        st.header(f"Player {st.session_state.winner} wins! 🎉")
+else:
+    st.subheader(f"Current player: {st.session_state.current_player}")
+
+# Reset button
+if st.button("Reset Game"):
+    initialize_game()
+
+# Styling
+st.markdown("""
+    <style>
+    button {
+        height: 80px !important;
+        width: 80px !important;
+        font-size: 40px !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
